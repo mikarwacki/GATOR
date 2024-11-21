@@ -26,6 +26,10 @@ func main() {
 	commands := commands{registeredCommands: make(map[string]func(*state, command) error)}
 	commands.register("login", handlerLogin)
 	commands.register("register", registerUser)
+	commands.register("reset", resetUsers)
+	commands.register("users", users)
+	commands.register("agg", agg)
+	commands.register("addfeed", addfeed)
 	ar := os.Args
 	if len(ar) < 2 {
 		log.Fatal("Not enough arguments provided")
