@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 	"os"
 
+	_ "github.com/lib/pq"
 	"github.com/mikarwacki/gator/internal/config"
+	"github.com/mikarwacki/gator/internal/database"
 )
 
 func main() {
@@ -13,18 +15,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	db, err := sql.Open("postgres", cfg.DbUrl)
+	if err != nil {
+		log.Fatal("Cound't connect to the db")
+	}
 
-	s := state{cfg: &cfg}
+	dbQueries := database.New(db)
+
+	s := state{cfg: &cfg, db: dbQueries}
 	commands := commands{registeredCommands: make(map[string]func(*state, command) error)}
-	commands.registeredCommands["login"] = handlerLogin
+	commands.register("login", handlerLogin)
+	commands.register("register", registerUser)
 	ar := os.Args
 	if len(ar) < 2 {
 		log.Fatal("Not enough arguments provided")
 	}
 
 	command := command{Name: ar[1], Args: ar[2:]}
-	fmt.Println(command.Name)
-	fmt.Println(command.Args)
 	err = commands.run(&s, command)
 	if err != nil {
 		log.Fatal(err)
