@@ -49,7 +49,14 @@ func addfeed(st *state, c command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Feed created successfully")
+
+	feedFollow := database.CreateFeedFollowParams{CreatedAt: dt, UpdatedAt: dt, UserID: currentUser.ID, FeedID: feed.ID}
+	_, err = st.db.CreateFeedFollow(context.Background(), feedFollow)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Feed created successfully and followed")
 	printFeed(feed, currentUser)
 
 	return nil

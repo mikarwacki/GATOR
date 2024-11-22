@@ -7,16 +7,43 @@ package database
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-const getFeedFollowByID = `-- name: GetFeedFollowByID :one
-SELECT id, created_at, updated_at, user_id, feed_id FROM feed_follows WHERE feed_id = $1
+const createFeedFollow = `-- name: CreateFeedFollow :one
+INSERT INTO feed_follows (id, 
+	created_at,
+	updated_at,
+	user_id,
+	feed_id)
+VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5
+)
+RETURNING id, created_at, updated_at, user_id, feed_id
 `
 
-func (q *Queries) GetFeedFollowByID(ctx context.Context, feedID uuid.UUID) (FeedFollow, error) {
-	row := q.db.QueryRowContext(ctx, getFeedFollowByID, feedID)
+type CreateFeedFollowParams struct {
+	ID        int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	FeedID    uuid.UUID
+}
+
+func (q *Queries) CreateFeedFollow(ctx context.Context, arg CreateFeedFollowParams) (FeedFollow, error) {
+	row := q.db.QueryRowContext(ctx, createFeedFollow,
+		arg.ID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.UserID,
+		arg.FeedID,
+	)
 	var i FeedFollow
 	err := row.Scan(
 		&i.ID,
@@ -26,4 +53,52 @@ func (q *Queries) GetFeedFollowByID(ctx context.Context, feedID uuid.UUID) (Feed
 		&i.FeedID,
 	)
 	return i, err
+}
+
+const getFeedFollowsForUser = `-- name: GetFeedFollowsForUser :many
+SELECT feed_follows.id, feed_follows.created_at, feed_follows.updated_at, feed_follows.user_id, feed_follows.feed_id, users.name as username, feeds.name as feed_name FROM feed_follows 
+JOIN users on users.id = feed_follows.user_id
+JOIN feeds on feeds.id = feed_follows.feed_id
+WHERE users.name = $1
+`
+
+type GetFeedFollowsForUserRow struct {
+	ID        int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+	FeedID    uuid.UUID
+	Username  string
+	FeedName  string
+}
+
+func (q *Queries) GetFeedFollowsForUser(ctx context.Context, name string) ([]GetFeedFollowsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedFollowsForUser, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFeedFollowsForUserRow
+	for rows.Next() {
+		var i GetFeedFollowsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.FeedID,
+			&i.Username,
+			&i.FeedName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
