@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/mikarwacki/gator/internal/config"
+	"github.com/mikarwacki/gator/internal/database"
 )
 
 type state struct {
+	db  *database.Queries
 	cfg *config.Config
 }
 
