@@ -29,10 +29,11 @@ func main() {
 	commands.register("reset", resetUsers)
 	commands.register("users", users)
 	commands.register("agg", agg)
-	commands.register("addfeed", addfeed)
+	commands.register("addfeed", middlewareLoggedIn(addfeed))
 	commands.register("feeds", feeds)
-	commands.register("follow", follow)
-	commands.register("following", following)
+	commands.register("follow", middlewareLoggedIn(follow))
+	commands.register("following", middlewareLoggedIn(following))
+	commands.register("unfollow", middlewareLoggedIn(unfollow))
 	ar := os.Args
 	if len(ar) < 2 {
 		log.Fatal("Not enough arguments provided")

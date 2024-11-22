@@ -34,12 +34,7 @@ func feeds(st *state, c command) error {
 	return nil
 }
 
-func addfeed(st *state, c command) error {
-	currentUser, err := st.db.GetUser(context.Background(), st.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
-
+func addfeed(st *state, c command, user database.User) error {
 	if len(c.Args) != 2 {
 		return errors.New("Command requires two arguments")
 	}
@@ -49,21 +44,21 @@ func addfeed(st *state, c command) error {
 	dt := time.Now().UTC()
 	id := uuid.New()
 
-	feedParams := database.CreateFeedParams{ID: id, CreatedAt: dt, UpdatedAt: dt, Name: name, Url: url, UserID: currentUser.ID}
+	feedParams := database.CreateFeedParams{ID: id, CreatedAt: dt, UpdatedAt: dt, Name: name, Url: url, UserID: user.ID}
 	feed, err := st.db.CreateFeed(context.Background(), feedParams)
 	if err != nil {
 		return err
 	}
 
 	followUuid := uuid.New()
-	feedFollow := database.CreateFeedFollowParams{ID: followUuid, CreatedAt: dt, UpdatedAt: dt, UserID: currentUser.ID, FeedID: feed.ID}
+	feedFollow := database.CreateFeedFollowParams{ID: followUuid, CreatedAt: dt, UpdatedAt: dt, UserID: user.ID, FeedID: feed.ID}
 	_, err = st.db.CreateFeedFollow(context.Background(), feedFollow)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Feed created successfully and followed")
-	printFeed(feed, currentUser)
+	printFeed(feed, user)
 
 	return nil
 }

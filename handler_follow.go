@@ -9,17 +9,32 @@ import (
 	"github.com/mikarwacki/gator/internal/database"
 )
 
-func following(st *state, c command) error {
-	if len(c.Args) != 0 {
-		return errors.New("This command doesn't accept arguments")
+func unfollow(st *state, c command, user database.User) error {
+	if len(c.Args) != 1 {
+		return errors.New("This command requires exactly one argument")
 	}
-
-	feedJoin, err := st.db.GetFeedFollowsForUser(context.Background(), st.cfg.CurrentUserName)
+	url := c.Args[0]
+	params := database.DeleteFeedByUserIdAndUrlParams{UserID: user.ID, Url: url}
+	err := st.db.DeleteFeedByUserIdAndUrl(context.Background(), params)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Printing all followed feeds for user %v", st.cfg.CurrentUserName)
+	fmt.Printf("Feed %v has been deleted\n", url)
+	return nil
+}
+
+func following(st *state, c command, user database.User) error {
+	if len(c.Args) != 0 {
+		return errors.New("This command doesn't accept arguments")
+	}
+
+	feedJoin, err := st.db.GetFeedFollowsForUser(context.Background(), user.Name)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Printing all followed feeds for user %v", user.Name)
 	for _, row := range feedJoin {
 		fmt.Printf("Feed name: %v\n", row.FeedName)
 	}
@@ -27,18 +42,13 @@ func following(st *state, c command) error {
 	return nil
 }
 
-func follow(st *state, c command) error {
+func follow(st *state, c command, user database.User) error {
 	if len(c.Args) != 1 {
 		return errors.New("This command requires exactly one argument")
 	}
 
 	url := c.Args[0]
 	feed, err := st.db.GetFeedByUrl(context.Background(), url)
-	if err != nil {
-		return err
-	}
-
-	user, err := st.db.GetUser(context.Background(), st.cfg.CurrentUserName)
 	if err != nil {
 		return err
 	}
