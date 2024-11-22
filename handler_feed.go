@@ -10,6 +10,26 @@ import (
 	"github.com/mikarwacki/gator/internal/database"
 )
 
+func feeds(st *state, c command) error {
+	if len(c.Args) != 0 {
+		return errors.New("This command doesn't accept arguments")
+	}
+
+	feeds, err := st.db.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, feed := range feeds {
+		user, err := st.db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("Coudn't find user %v", feed.UserID)
+		}
+		printFeed(feed, user)
+	}
+	return nil
+}
+
 func addfeed(st *state, c command) error {
 	if len(c.Args) != 2 {
 		return errors.New("Command requires two arguments")
@@ -30,14 +50,16 @@ func addfeed(st *state, c command) error {
 		return err
 	}
 	fmt.Println("Feed created successfully")
-	printFeed(feed)
+	printFeed(feed, currentUser)
 
 	return nil
 }
 
-func printFeed(feed database.Feed) {
-	fmt.Printf(" * ID:      %v\n", feed.ID)
-	fmt.Printf(" * Name:    %v\n", feed.Name)
-	fmt.Printf(" * Url:     %v\n", feed.Url)
-	fmt.Printf(" * UserId:  %v\n", feed.UserID)
+func printFeed(feed database.Feed, user database.User) {
+	fmt.Printf(" * ID:        %v\n", feed.ID)
+	fmt.Printf(" * CreatedAt: %v\n", feed.CreatedAt)
+	fmt.Printf(" * UpdatedAt: %v\n", feed.UpdatedAt)
+	fmt.Printf(" * Name:      %v\n", feed.Name)
+	fmt.Printf(" * Url:       %v\n", feed.Url)
+	fmt.Printf(" * User:      %v\n", user.Name)
 }
