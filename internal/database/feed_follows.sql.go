@@ -29,7 +29,7 @@ RETURNING id, created_at, updated_at, user_id, feed_id
 `
 
 type CreateFeedFollowParams struct {
-	ID        int32
+	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    uuid.UUID
@@ -63,7 +63,7 @@ WHERE users.name = $1
 `
 
 type GetFeedFollowsForUserRow struct {
-	ID        int32
+	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    uuid.UUID

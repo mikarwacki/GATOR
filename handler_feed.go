@@ -11,6 +11,10 @@ import (
 )
 
 func feeds(st *state, c command) error {
+	_, err := st.db.GetUser(context.Background(), st.cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
 	if len(c.Args) != 0 {
 		return errors.New("This command doesn't accept arguments")
 	}
@@ -31,6 +35,11 @@ func feeds(st *state, c command) error {
 }
 
 func addfeed(st *state, c command) error {
+	currentUser, err := st.db.GetUser(context.Background(), st.cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+
 	if len(c.Args) != 2 {
 		return errors.New("Command requires two arguments")
 	}
@@ -39,10 +48,6 @@ func addfeed(st *state, c command) error {
 	url := c.Args[1]
 	dt := time.Now().UTC()
 	id := uuid.New()
-	currentUser, err := st.db.GetUser(context.Background(), st.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 
 	feedParams := database.CreateFeedParams{ID: id, CreatedAt: dt, UpdatedAt: dt, Name: name, Url: url, UserID: currentUser.ID}
 	feed, err := st.db.CreateFeed(context.Background(), feedParams)
@@ -50,7 +55,8 @@ func addfeed(st *state, c command) error {
 		return err
 	}
 
-	feedFollow := database.CreateFeedFollowParams{CreatedAt: dt, UpdatedAt: dt, UserID: currentUser.ID, FeedID: feed.ID}
+	followUuid := uuid.New()
+	feedFollow := database.CreateFeedFollowParams{ID: followUuid, CreatedAt: dt, UpdatedAt: dt, UserID: currentUser.ID, FeedID: feed.ID}
 	_, err = st.db.CreateFeedFollow(context.Background(), feedFollow)
 	if err != nil {
 		return err

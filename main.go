@@ -32,6 +32,7 @@ func main() {
 	commands.register("addfeed", addfeed)
 	commands.register("feeds", feeds)
 	commands.register("follow", follow)
+	commands.register("following", following)
 	ar := os.Args
 	if len(ar) < 2 {
 		log.Fatal("Not enough arguments provided")
