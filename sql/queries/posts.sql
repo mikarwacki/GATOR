@@ -14,11 +14,12 @@ RETURNING *;
 
 -- name: GetPosts :many
 SELECT * FROM posts
-ORDER BY posted_at desc;
+ORDER BY posted_at DESC;
 
 -- name: GetPostsForUser :many
-SELECT posts.* FROM posts
-JOIN feeds on feeds.id = posts.feed_id
-WHERE feeds.user_id = $1
-ORDER BY posts.posted_at
+SELECT posts.*, feeds.name AS feed_name FROM posts
+JOIN feed_follows ON feed_follows.feed_id = posts.feed_id
+JOIN feeds ON posts.feed_id = feeds.id
+WHERE feed_follows.user_id = $1
+ORDER BY posts.posted_at DESC
 LIMIT $2;

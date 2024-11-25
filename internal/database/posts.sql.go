@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,8 +34,8 @@ type CreatePostParams struct {
 	UpdatedAt   time.Time
 	Title       string
 	Url         string
-	Description string
-	PostedAt    time.Time
+	Description sql.NullString
+	PostedAt    sql.NullTime
 	FeedID      uuid.UUID
 }
 
@@ -65,7 +66,7 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 
 const getPosts = `-- name: GetPosts :many
 SELECT id, created_at, updated_at, title, url, description, posted_at, feed_id FROM posts
-ORDER BY posted_at desc
+ORDER BY posted_at DESC
 `
 
 func (q *Queries) GetPosts(ctx context.Context) ([]Post, error) {
@@ -101,10 +102,11 @@ func (q *Queries) GetPosts(ctx context.Context) ([]Post, error) {
 }
 
 const getPostsForUser = `-- name: GetPostsForUser :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.posted_at, posts.feed_id FROM posts
-JOIN feeds on feeds.id = posts.feed_id
-WHERE feeds.user_id = $1
-ORDER BY posts.posted_at
+SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.posted_at, posts.feed_id, feeds.name AS feed_name FROM posts
+JOIN feed_follows ON feed_follows.feed_id = posts.feed_id
+JOIN feeds ON posts.feed_id = feeds.id
+WHERE feed_follows.user_id = $1
+ORDER BY posts.posted_at DESC
 LIMIT $2
 `
 
@@ -113,15 +115,27 @@ type GetPostsForUserParams struct {
 	Limit  int32
 }
 
-func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]Post, error) {
+type GetPostsForUserRow struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description sql.NullString
+	PostedAt    sql.NullTime
+	FeedID      uuid.UUID
+	FeedName    string
+}
+
+func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]GetPostsForUserRow, error) {
 	rows, err := q.db.QueryContext(ctx, getPostsForUser, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []GetPostsForUserRow
 	for rows.Next() {
-		var i Post
+		var i GetPostsForUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -131,6 +145,7 @@ func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams
 			&i.Description,
 			&i.PostedAt,
 			&i.FeedID,
+			&i.FeedName,
 		); err != nil {
 			return nil, err
 		}

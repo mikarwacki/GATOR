@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/mikarwacki/gator/internal/database"
 	"github.com/mikarwacki/gator/internal/rss"
 )
@@ -85,34 +86,36 @@ func scrapeFeeds(s *state) error {
 		if err != nil {
 			return fmt.Errorf("Coudn't parse Publish date of a post %v", err)
 		}
+		fmt.Println("____DEEBUUUUUG_____")
+		fmt.Println(rssItem.Description)
 		params := database.CreatePostParams{
 			ID:          id,
 			CreatedAt:   dt,
 			UpdatedAt:   dt,
-			Url:         markedFeed.Url,
+			Url:         rssItem.Link,
 			FeedID:      markedFeed.ID,
 			Title:       rssItem.Title,
-			Description: rssItem.Description,
+			Description: {rssItem.Description,
 			PostedAt:    date,
 		}
 
 		_, err = s.db.CreatePost(context.Background(), params)
-		if err != nil && err.(*pq.Error).Code != "23505" { //&& err = UrlFetchError
-			fmt.Println(params.FeedID)
-			fmt.Println(params.Url)
-			return fmt.Errorf("Creating post error %v", err)
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				continue
+			} else {
+				log.Printf("Couldn't create post: %v", err)
+				continue
+			}
 		}
 	}
 	return nil
 }
 
-func printRssItem(item rss.RSSItem) {
-	fmt.Printf("Title: %v, Link: %v, Desc: %v, PubDate: %v\n", item.Title, item.Link, item.Description, item.PubDate)
-}
-
-func printPost(post database.Post) {
-	fmt.Printf("Title: %v\n", post.Title)
-	fmt.Printf("Url: %v\n", post.Url)
-	fmt.Printf("Publication Date: %v\n", post.PostedAt)
-	fmt.Printf("Description: %v\n", post.Description)
+func printPost(post database.GetPostsForUserRow) {
+	fmt.Printf("%s from %s\n", post.PostedAt.Time.Format("Mon Jan 2"), post.FeedName)
+	fmt.Printf("--- %s ---\n", post.Title)
+	fmt.Printf("    %v\n", post.Description)
+	fmt.Printf("Link: %s\n", post.Url)
+	fmt.Println("=====================================")
 }
