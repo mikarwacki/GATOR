@@ -34,6 +34,7 @@ func main() {
 	commands.register("follow", middlewareLoggedIn(follow))
 	commands.register("following", middlewareLoggedIn(following))
 	commands.register("unfollow", middlewareLoggedIn(unfollow))
+	commands.register("browse", browse)
 	ar := os.Args
 	if len(ar) < 2 {
 		log.Fatal("Not enough arguments provided")

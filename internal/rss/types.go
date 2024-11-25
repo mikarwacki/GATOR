@@ -1,4 +1,4 @@
-package rrs
+package rss
 
 type RSSFeed struct {
 	Channel struct {

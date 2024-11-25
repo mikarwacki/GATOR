@@ -65,6 +65,6 @@ func follow(st *state, c command, user database.User) error {
 }
 
 func printFollow(feed database.Feed, user database.User) {
-	fmt.Printf("feed name: %v", feed.Name)
-	fmt.Printf("user name: %v", user.Name)
+	fmt.Printf("feed name: %v\n", feed.Name)
+	fmt.Printf("user name: %v\n", user.Name)
 }

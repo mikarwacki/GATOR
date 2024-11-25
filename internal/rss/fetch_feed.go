@@ -1,4 +1,4 @@
-package rrs
+package rss
 
 import (
 	"context"
