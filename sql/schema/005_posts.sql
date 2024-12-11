@@ -5,8 +5,8 @@ CREATE TABLE posts(
 	updated_at TIMESTAMP NOT NULL,
 	title TEXT NOT NULL,
 	url TEXT UNIQUE NOT NULL,
-	description TEXT,
-	posted_at TIMESTAMP,
+	description TEXT NOT NULL,
+	posted_at TIMESTAMP NOT NULL,
 	feed_id UUID NOT NULL,
 
 	CONSTRAINT fk_feeds FOREIGN KEY (feed_id)

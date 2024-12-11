@@ -86,7 +86,6 @@ func scrapeFeeds(s *state) error {
 		if err != nil {
 			return fmt.Errorf("Coudn't parse Publish date of a post %v", err)
 		}
-		fmt.Println("____DEEBUUUUUG_____")
 		fmt.Println(rssItem.Description)
 		params := database.CreatePostParams{
 			ID:          id,
@@ -95,7 +94,7 @@ func scrapeFeeds(s *state) error {
 			Url:         rssItem.Link,
 			FeedID:      markedFeed.ID,
 			Title:       rssItem.Title,
-			Description: {rssItem.Description,
+			Description: rssItem.Description,
 			PostedAt:    date,
 		}
 
@@ -113,7 +112,7 @@ func scrapeFeeds(s *state) error {
 }
 
 func printPost(post database.GetPostsForUserRow) {
-	fmt.Printf("%s from %s\n", post.PostedAt.Time.Format("Mon Jan 2"), post.FeedName)
+	fmt.Printf("%s from %s\n", post.PostedAt.Format("Mon Jan 2"), post.FeedName)
 	fmt.Printf("--- %s ---\n", post.Title)
 	fmt.Printf("    %v\n", post.Description)
 	fmt.Printf("Link: %s\n", post.Url)
