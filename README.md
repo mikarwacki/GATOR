@@ -41,6 +41,6 @@ Available commands:
 - unfollow "feed_name" -> allows user to unfollow one of theirs feeds
 - browse "number_of_feeds" -> displays the latest feeds followed by a user, requires one argument that tells how many feeds should be displayed
 
-  # Future improvements:
+# Future improvements:
   - add BubbleTea support for a better user experience with nice TUI elements
   - host gator so that users can ssh into the server and browse their feeds
